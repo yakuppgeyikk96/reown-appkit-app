@@ -1,6 +1,10 @@
 # YG Digital Marketplace
 A decentralized marketplace built on Solana blockchain for digital products.
 
+- App Preview: https://reown-appkit-app-p2we.vercel.app/marketplace
+- Video Promotion Link: https://drive.google.com/file/d/184iw1iMi_U61ddXfudkpWVPakw0OM68j/view?usp=sharing
+- Escrow Smart Contract Repo: https://github.com/yakuppgeyikk96/escrow_program
+
 ## Features
 
 - 🔐 Secure Authentication with Reown Appkit on Solana
