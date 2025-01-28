@@ -1,3 +1,5 @@
+"use client";
+
 import { ProductCard } from "@/components/shared/ProductCard/";
 import { Product } from "@/types/product";
 

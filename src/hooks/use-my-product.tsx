@@ -1,65 +1,30 @@
 import { getMyProducts } from "@/app/actions/product";
-import { Product } from "@/types/product";
-import { useCallback, useEffect, useState } from "react";
-import { toast } from "sonner";
+import { useAppKitAccount } from "@reown/appkit/react";
+import { useQuery } from "@tanstack/react-query";
 
-interface UseMyProductParams {
-  address?: string;
-}
+export const useMyProduct = () => {
+  const { address, status } = useAppKitAccount();
 
-interface UseMyProductReturn {
-  products: Product[];
-  loading: boolean;
-  error: Error | null;
-  refetchProducts: () => Promise<void>;
-}
-
-const useMyProduct = ({ address }: UseMyProductParams): UseMyProductReturn => {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
-
-  const fetchMyProducts = useCallback(async (address?: string) => {
-    if (!address) {
-      setLoading(false);
-      return;
-    }
-
-    try {
-      setLoading(true);
-      setError(null);
-
-      const result = await getMyProducts({
-        owner: address,
-      });
-
-      if (result.success && result.data) {
-        setProducts(result.data);
-      } else {
-        throw new Error("Failed to load products");
-      }
-    } catch (err) {
-      const error =
-        err instanceof Error ? err : new Error("Unknown error occurred");
-      console.error("Error fetching products:", error);
-      setError(error);
-      toast.error(error.message);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (address) {
-      fetchMyProducts(address);
-    }
-  }, [address, fetchMyProducts]);
+  const {
+    data: products = [],
+    isLoading,
+    error,
+    refetch: refetchProducts,
+  } = useQuery({
+    queryKey: ["myProducts", address],
+    queryFn: () =>
+      getMyProducts({ owner: address || "" }).then((result) =>
+        result.success ? result.data || [] : []
+      ),
+    enabled: !!address && status === "connected",
+  });
 
   return {
     products,
-    loading,
+    loading: isLoading || status !== "connected",
     error,
-    refetchProducts: () => fetchMyProducts(address),
+    refetchProducts,
+    address,
   };
 };
 

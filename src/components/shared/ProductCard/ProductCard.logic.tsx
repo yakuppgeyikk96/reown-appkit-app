@@ -4,24 +4,58 @@ import { useRouter } from "next/navigation";
 import { useSolana } from "@/hooks/useSolana";
 import { ProductCardProps } from "./ProductCard.types";
 import { toast } from "sonner";
-import { updateProductMintAddress } from "@/app/actions/product";
 import { useAppKitAccount } from "@reown/appkit/react";
 import { CheckIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import PurchaseButton from "@/components/product/PurchaseButton";
+import { useEscrow } from "@/hooks/use-escrow";
+import { useMemo } from "react";
+import { getPriceFromMetadata } from "@/utils/get-price-from-metadata";
+import { updateProductEscrow } from "@/app/actions/update-product-escrow";
+import Spinner from "../Spinner";
+import { getSolanaExplorerLink } from "@/utils/get-solana-explorer-link";
+import useMyProduct from "@/hooks/use-my-product";
 
 export const useProductCardLogic = ({ product, variant }: ProductCardProps) => {
   const router = useRouter();
-  const { createToken, isLoading } = useSolana();
+  const { isLoading } = useSolana();
   const { address, isConnected } = useAppKitAccount();
+  const { refetchProducts } = useMyProduct();
+
+  const { listProduct, isLoading: isEscrowLoading } = useEscrow();
+
+  const productPrice = useMemo(() => {
+    return getPriceFromMetadata(product.metadata);
+  }, [product.metadata]);
 
   const handleList = async () => {
-    const mintAddress = await createToken();
+    if (!productPrice || !address || !product.metadataUri) {
+      toast.error("Product price and metadata uri is required");
+      return;
+    }
 
-    if (mintAddress) {
-      await updateProductMintAddress(product.id, mintAddress);
-      toast.success("Product listed successfully");
-      router.refresh();
+    try {
+      /**
+       * List product on escrow
+       */
+      const result = await listProduct(productPrice, product.metadataUri);
+      console.log("result", result);
+
+      if (result) {
+        /**
+         * Save escrowId to database
+         */
+        await updateProductEscrow(
+          product.id,
+          result.productAccount,
+          result.uniqueSeed
+        );
+
+        refetchProducts();
+      }
+    } catch (error) {
+      console.error("Failed to list product", error);
+      toast.error("Failed to list product");
     }
   };
 
@@ -33,6 +67,8 @@ export const useProductCardLogic = ({ product, variant }: ProductCardProps) => {
 
   const isOwner = product.owner === address;
   const hasBought = product.buyers?.includes(address || "");
+
+  const solanaExplorerLink = getSolanaExplorerLink(product.escrowId, "devnet");
 
   const renderActions = () => {
     if (!address || !isConnected) {
@@ -48,13 +84,13 @@ export const useProductCardLogic = ({ product, variant }: ProductCardProps) => {
         {isOwner ? (
           // Owner actions
           <>
-            {!product.mintAddress ? (
+            {!product.escrowId ? (
               <Button
                 onClick={handleList}
                 disabled={isLoading}
                 className="w-full"
               >
-                {isLoading ? "Listing..." : "List Product"}
+                {isEscrowLoading ? <Spinner /> : "List Product"}
               </Button>
             ) : (
               <div className="p-2 bg-green-100 border border-green-300 rounded text-center flex items-center justify-center gap-2">
@@ -72,7 +108,7 @@ export const useProductCardLogic = ({ product, variant }: ProductCardProps) => {
                 <p className="text-green-700">You own this product</p>
               </div>
             ) : (
-              <PurchaseButton product={product} buyerAddress={address} />
+              <PurchaseButton product={product} />
             )}
           </>
         )}
@@ -92,5 +128,6 @@ export const useProductCardLogic = ({ product, variant }: ProductCardProps) => {
     renderActions,
     isOwner,
     hasBought,
+    solanaExplorerLink,
   };
 };

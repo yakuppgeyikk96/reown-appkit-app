@@ -4,6 +4,12 @@
 // Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
+enum ProductStatus {
+  DRAFT
+  LISTED
+  SOLD
+}
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -15,14 +21,15 @@ datasource db {
 }
 
 model Product {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  id          String        @id @default(auto()) @map("_id") @db.ObjectId
   owner       String
   name        String
   metadataUri String
-  status      String   @default("draft")
-  mintAddress String?
+  status      ProductStatus @default(DRAFT)
+  escrowId    String?
+  uniqueSeed  String?
   price       Float?
-  buyers      String[] @default([])
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  buyers      String[]      @default([])
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
 }

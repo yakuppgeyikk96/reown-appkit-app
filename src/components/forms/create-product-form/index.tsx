@@ -21,6 +21,7 @@ import {
 import { PRODUCT_TYPES } from "@/constants/product-types";
 import { FileUpload } from "@/components/ui/file-upload";
 import useCreateProductFormLogic from "./CreateProductForm.logic";
+import Spinner from "@/components/shared/Spinner";
 
 export function CreateProductForm() {
   const { form, isLoading, onFormSubmit } = useCreateProductFormLogic();
@@ -148,7 +149,7 @@ export function CreateProductForm() {
         />
 
         <Button type="submit" disabled={isLoading}>
-          {isLoading ? "Yükleniyor..." : "Ürünü Listele"}
+          {isLoading ? <Spinner /> : "Create Product"}
         </Button>
       </form>
     </Form>

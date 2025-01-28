@@ -3,6 +3,12 @@ export enum ProductType {
   DESIGN = "design",
 }
 
+export enum ProductStatus {
+  DRAFT = "DRAFT",
+  LISTED = "LISTED",
+  SOLD = "SOLD",
+}
+
 export interface ProductTypeInfo {
   value: ProductType;
   label: string;
@@ -53,8 +59,9 @@ export interface Product {
   owner: string;
   name: string;
   metadataUri: string;
-  status: string;
-  mintAddress: string | null;
+  status: ProductStatus;
+  escrowId: string | null;
+  uniqueSeed: string | null;
   price: number | null;
   buyers: string[];
   createdAt: Date;

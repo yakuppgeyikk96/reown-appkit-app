@@ -10,6 +10,8 @@ import {
   SolflareWalletAdapter,
 } from "@solana/wallet-adapter-wallets";
 import { solanaDevnet } from "@reown/appkit/networks";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { Toaster } from "sonner";
 
 const solanaAdapter = new SolanaAdapter({
   wallets: [new PhantomWalletAdapter(), new SolflareWalletAdapter()],
@@ -34,14 +36,19 @@ createAppKit({
   },
 });
 
+const queryClient = new QueryClient();
+
 export default function AppLayout({ children }: { children: ReactNode }) {
   return (
-    <div className="flex flex-col min-h-screen">
-      <Header />
-      <main className="container max-w-screen-xl mx-auto flex-1">
-        {children}
-      </main>
-      <Footer />
-    </div>
+    <QueryClientProvider client={queryClient}>
+      <div className="flex flex-col min-h-screen">
+        <Header />
+        <main className="container max-w-screen-xl mx-auto flex-1">
+          {children}
+        </main>
+        <Footer />
+      </div>
+      <Toaster />
+    </QueryClientProvider>
   );
 }

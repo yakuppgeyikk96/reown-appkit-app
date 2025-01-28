@@ -6,6 +6,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Product } from "@/types/product";
+import getStatusText from "@/utils/get-status-text";
 
 interface MyProductDetailViewProps {
   product: Product;
@@ -28,8 +29,8 @@ export default function MyProductDetailView({
 
   const symbol = product.metadata.symbol;
 
-  const mintAdress = product.mintAddress
-    ? `${product.mintAddress.slice(0, 4)}...${product.mintAddress.slice(-4)}`
+  const escrowId = product.escrowId
+    ? `${product.escrowId.slice(0, 4)}...${product.escrowId.slice(-4)}`
     : "N/A";
 
   const statusColors: Record<string, string> = {
@@ -90,7 +91,7 @@ export default function MyProductDetailView({
 
       {renderDetailItem(
         "Status",
-        product.status,
+        getStatusText(product.status).toLowerCase(),
         "default",
         statusColors[product.status]
       )}
@@ -101,7 +102,7 @@ export default function MyProductDetailView({
 
       {renderDetailItem("Symbol", symbol)}
 
-      {renderDetailItemWithTooltip("Mint Address", mintAdress)}
+      {renderDetailItemWithTooltip("Escrow ID", escrowId)}
     </div>
   );
 }

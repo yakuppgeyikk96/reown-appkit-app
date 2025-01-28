@@ -3,13 +3,14 @@
 
 import { prisma } from "@/lib/prisma";
 import ActionReturn from "@/types/common/ActionReturn";
-import { Product } from "@/types/product";
+import { Product, ProductStatus } from "@/types/product";
 import { revalidatePath } from "next/cache";
 
 export async function createProduct(
   owner: string,
   name: string,
-  metadataUri: string
+  metadataUri: string,
+  price: number
 ) {
   try {
     const product = await prisma.product.create({
@@ -17,10 +18,10 @@ export async function createProduct(
         owner,
         name,
         metadataUri,
+        price,
       },
     });
 
-    revalidatePath("/dashboard/my-products");
     return { success: true, product };
   } catch (error) {
     console.error("Failed to create product:", error);
@@ -46,8 +47,14 @@ export async function getMyProducts(data: {
         const metadata = await fetch(product.metadataUri).then((res) =>
           res.json()
         );
-        return {
+
+        const productWithStatus = {
           ...product,
+          status: ProductStatus[product.status],
+        };
+
+        return {
+          ...productWithStatus,
           metadata,
         };
       })
@@ -76,7 +83,11 @@ export async function getMyProductById(
 
     const metadata = await fetch(product.metadataUri).then((res) => res.json());
 
-    return { success: true, data: { ...product, metadata }, error: null };
+    return {
+      success: true,
+      data: { ...product, metadata, status: ProductStatus[product.status] },
+      error: null,
+    };
   } catch (error: any) {
     console.error("Failed to fetch product:", error);
     return { success: false, error, data: null };
@@ -85,8 +96,8 @@ export async function getMyProductById(
 
 export async function updateProductStatus(
   id: string,
-  status: "minted" | "listed",
-  mintAddress?: string,
+  status: ProductStatus,
+  escrowId?: string,
   price?: number
 ) {
   try {
@@ -94,7 +105,7 @@ export async function updateProductStatus(
       where: { id },
       data: {
         status,
-        mintAddress,
+        escrowId,
         price,
       },
     });
@@ -109,15 +120,15 @@ export async function updateProductStatus(
 
 export async function updateProductMintAddress(
   id: string,
-  mintAddress: string,
+  escrowId: string,
   price?: number
 ) {
   try {
     const product = await prisma.product.update({
       where: { id },
       data: {
-        mintAddress,
-        status: "minted",
+        escrowId,
+        status: ProductStatus.LISTED,
         price,
       },
     });
@@ -139,7 +150,6 @@ export async function updateProductBuyers(id: string, buyer: string) {
       },
     });
 
-    revalidatePath("/marketplace");
     return { success: true, product };
   } catch (error) {
     console.error("Failed to update product buyers:", error);
@@ -162,7 +172,7 @@ export async function getListedProducts() {
   try {
     const products = await prisma.product.findMany({
       where: {
-        mintAddress: {
+        escrowId: {
           not: null,
         },
       },

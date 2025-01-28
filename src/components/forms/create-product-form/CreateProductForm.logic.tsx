@@ -169,7 +169,8 @@ const useCreateProductFormLogic = () => {
         const { success } = await createProduct(
           address,
           values.title,
-          metadataUri
+          metadataUri,
+          values.price
         );
 
         if (success) {
